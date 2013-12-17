@@ -1,0 +1,7 @@
+__*
+.project
+.pydevproject
+.settings
+*.resources.prefs
+.idea
+.idea/*

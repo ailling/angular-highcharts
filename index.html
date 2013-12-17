@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html ng-app="myapp">
+<head>
+    <title></title>
+
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script src="http://code.highcharts.com/stock/highstock.js"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/angularjs/1.2.4/angular.min.js"></script>
+    <script type="text/javascript" src="http://www.highcharts.com/samples/data/three-series-1000-points.js"></script>
+
+    <script src="directives.js"></script>
+    <script src="app.js"></script>
+
+</head>
+<body>
+
+<div ng-controller="AppController">
+    <!--
+    <div highchart highstock id="chart" style="min-width: 310px; height: 400px; margin: 0 auto">
+        <charttitle text="AAPL"></charttitle>
+        <subtitle text="Stock price time series"></subtitle>
+        <series name="AAPL" data-id="timeseries" url="http://www.highcharts.com/samples/data/jsonp.php?filename=aapl-c.json&callback=?"></series>
+        <series name="events" type="flags"
+                data='[{"x":1303689600000,"title":"H","text":"Euro Contained by Channel Resistance"}]'
+                data-id="events"
+                on-series="timeseries"
+                shape="circlepin"
+                width=16></series>
+        <credits enabled=false></credits>
+    </div>
+    -->
+
+    <!--
+    <button ng-click="printTitle()">Print title</button>
+    -->
+
+    <!--
+        $(function () {
+        $('#container').highcharts({
+            chart: {
+            },
+            xAxis: {
+                plotBands: [{ // mark the weekend
+                    color: '#FCFFC5',
+                    from: Date.UTC(2010, 0, 2),
+                    to: Date.UTC(2010, 0, 4)
+                }],
+                tickInterval: 24 * 3600 * 1000, // one day
+                type: 'datetime'
+            },
+
+            series: [{
+                data: [29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4],
+                pointStart: Date.UTC(2010, 0, 1),
+                pointInterval: 24 * 3600 * 1000
+            }]
+        });
+    });-->
+
+    <div highchart style="min-width: 310px; height: 400px; margin: 0 auto">
+        <charttitle text="Chart with a title"></charttitle>
+        <xaxis tick-interval=86400000 data-type="datetime"></xaxis>
+        <series point-begin="1262304000000" point-interval="86400000"
+                data="[29.9, 71.5, 106.4, 129.2, 144.0, 176.0, 135.6, 148.5, 216.4]">
+        </series>
+        <plotband axis="x" color="#FCFFC5" from=1262390400000 to=1262563200000></plotband>
+    </div>
+</div>
+
+</body>
+</html>

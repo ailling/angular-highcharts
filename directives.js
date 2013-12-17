@@ -1,20 +1,8 @@
 var app = angular.module('highchartsModule', []);
 
 
-function isNumber(n) {
-    return !isNaN(parseFloat(n)) && isFinite(n);
-}
-
-function isArray(arr){
-    return Object.prototype.toString.call(arr) === '[object Array]';
-}
-
-function isObject(obj){
-    return Object.prototype.toString.call(obj) === '[object Object]';
-}
-
-
 function get_options(attrs, typemap, scope, parseJson){
+    // helper function to map element attributes to highcharts options
     typemap = typemap || {};
     scope = scope || {};
     parseJson = typeof parseJson !== 'undefined' ? parseJson : true;
@@ -77,17 +65,24 @@ function get_options(attrs, typemap, scope, parseJson){
 
 app.directive('highchart', function (){
     return {
+        // elements and attributes allowed
         restrict: 'E, A',
+        // isolate scope
+        scope: {},
+
         controller: function($scope){
+            // config options for highcharts
             $scope.highchart_options = {
                 title: {},
                 subtitle: {},
                 series:  [],
                 xaxis:  {
-                    plotBands: []
+                    plotBands: [],
+                    title: {}
                 },
                 yaxis:  {
-                    plotBands: []
+                    plotBands: [],
+                    title: {}
                 },
                 chart:  {},
                 legend:  {},
@@ -96,6 +91,7 @@ app.directive('highchart', function (){
                 tooltip:  {}
             };
 
+            // typecast map
             $scope.typemap = {
                 series: {
                     name: 'string',
@@ -112,23 +108,14 @@ app.directive('highchart', function (){
                     id: 'string',
                     pointStart: 'number',
                     pointInterval: 'number'
-                }
-            };
-
-
-            this.setCredits = function(attrs){
-                var typemap = {
+                },
+                credits: {
                     enabled: 'boolean',
                     href: 'string',
                     position: 'object',
                     text: 'string'
-                }
-
-                $scope.highchart_options.credits = get_options(attrs, typemap);
-            };
-
-            this.setToolTip = function(attrs){
-                var typemap = {
+                },
+                tooltip: {
                     animation: 'boolean',
                     backgroundColor: 'string',
                     borderColor: 'string',
@@ -153,72 +140,32 @@ app.directive('highchart', function (){
                     valuePrefix: 'string',
                     valueSuffix: 'string',
                     xDateFormat: 'string'
-                };
-
-                $scope.highchart_options.tooltip = get_options(attrs, typemap);
-            };
-
-            this.setLoading = function(attrs){
-                var typemap = {
+                },
+                loading: {
                     hideDuration: 'number',
                     labelStyle: 'string|object',
                     showDuration: 'number',
                     style: 'string|object'
-                };
-
-                $scope.highchart_options.loading = get_options(attrs, typemap);
-            };
-
-
-            this.addPlotBand = function(axis, attrs){
-                var typemap = {
+                },
+                plotband: {
                     color: 'string',
                     from: 'number',
                     id: 'string',
                     to: 'number',
                     zIndex: 'number'
-                };
-
-                if(axis === 'x'){
-                    $scope.highchart_options.xaxis.plotBands.push(get_options(attrs, typemap));
-                }
-                else{
-                    $scope.highchart_options.yaxis.plotBands.push(get_options(attrs, typemap));
-                }
-            };
-
-            this.setTitle = function(attrs){
-                var typemap = {
+                },
+                title: {
                     align: 'string',
                     floating: 'boolean',
                     margin: 'number',
                     style: 'object',
                     text: 'string',
                     useHTML: 'boolean',
+                    rotation: 'number',
                     x: 'number',
                     y: 'number'
-                };
-
-                $scope.highchart_options.title = get_options(attrs, typemap);
-            };
-
-            this.setSubTitle = function(attrs){
-                var typemap = {
-                    align: 'string',
-                    floating: 'boolean',
-                    margin: 'number',
-                    style: 'object',
-                    text: 'string',
-                    useHTML: 'boolean',
-                    x: 'number',
-                    y: 'number'
-                };
-
-                $scope.highchart_options.subtitle = get_options(attrs, typemap);
-            };
-
-            this.setLegend = function(attrs){
-                var typemap = {
+                },
+                legend: {
                     align: 'string',
                     backgroundColor: 'string',
                     borderColor: 'string',
@@ -246,13 +193,8 @@ app.directive('highchart', function (){
                     y: 'number',
 
                     labelFormatter: 'function'
-                };
-
-                $scope.highchart_options.legend = get_options(attrs, typemap, $scope);
-            };
-
-            this.setChart = function(attrs){
-                var typemap = {
+                },
+                chart: {
                     alignTicks: 'boolean',
                     animation: 'boolean|object',
                     backgroundColor: 'string',
@@ -286,13 +228,8 @@ app.directive('highchart', function (){
                     type: 'string',
                     width: 'number',
                     zoomType: 'string'
-                };
-
-                $scope.highchart_options.chart = get_options(attrs, typemap);
-            };
-
-            this.setAxis = function(axis, attrs){
-                var typemap = {
+                },
+                axis: {
                     allowDecimals: 'boolean',
                     alternateGridColor: 'string',
                     dateTimeLabelFormats: 'object',
@@ -340,19 +277,66 @@ app.directive('highchart', function (){
                     tickWidth: 'number',
                     top: 'number',
                     type: 'string'
-                };
+                }
+            };
 
+            $scope.n_series = 0;
+            $scope.n_series_ready = 0;
+            $scope.is_highstock = false;
+
+            this.setCredits = function(attrs){
+                $.extend($scope.highchart_options.credits, get_options(attrs, $scope.typemap.credits));
+            };
+
+            this.setToolTip = function(attrs){
+                $.extend($scope.highchart_options.tooltip, get_options(attrs, $scope.typemap.tooltip));
+            };
+
+            this.setLoading = function(attrs){
+                $.extend($scope.highchart_options.loading, get_options(attrs, $scope.typemap.loading));
+            };
+
+
+            this.addPlotBand = function(axis, attrs){
                 if(axis === 'x'){
-                    var opt = get_options(attrs, typemap);
+                    $scope.highchart_options.xaxis.plotBands.push(get_options(attrs, $scope.typemap.plotband));
+                }
+                else{
+                    $scope.highchart_options.yaxis.plotBands.push(get_options(attrs, $scope.typemap.plotband));
+                }
+            };
+
+            this.setTitle = function(attrs){
+                $.extend($scope.highchart_options.title, get_options(attrs, $scope.typemap.title));
+            };
+
+            this.setSubTitle = function(attrs){
+                $.extend($scope.highchart_options.subtitle, get_options(attrs, $scope.typemap.title));
+            };
+
+            this.setLegend = function(attrs){
+                $.extend($scope.highchart_options.legend, get_options(attrs, $scope.typemap.legend, $scope));
+            };
+
+            this.setChart = function(attrs){
+                $.extend($scope.highchart_options.chart, get_options(attrs, $scope.typemap.chart));
+            };
+
+            this.setAxis = function(axis, attrs){
+                if(axis === 'x'){
+                    var opt = get_options(attrs, $scope.typemap.axis);
                     $.extend($scope.highchart_options.xaxis, opt);
                 }
                 else if(axis === 'y'){
-                    var opt = get_options(attrs, typemap);
+                    var opt = get_options(attrs, $scope.typemap.axis);
                     $.extend($scope.highchart_options.yaxis, opt);
                 }
             };
 
             this.addSeries = function(attrs){
+                $scope.n_series += 1;
+                $scope.n_series_ready += 1;
+
                 // some kind of bug not resolving point-start to pointStart
                 attrs['pointStart'] = attrs['pointBegin'];
                 $scope.highchart_options.series.push(get_options(attrs, $scope.typemap.series, $scope));
@@ -360,13 +344,18 @@ app.directive('highchart', function (){
 
             this.addSeriesFromURL = function(attrs){
                 var url = attrs['url'];
+                $scope.n_series += 1;
 
                 $.getJSON(url, function(data) {
+                    $scope.n_series_ready += 1;
+
                     attrs['data'] = data;
                     var series = get_options(attrs, $scope.typemap.series, $scope, false);
+                    $scope.highchart_options.series.push(series);
 
-                    var chart = $scope.chart.highcharts();
-                    chart.addSeries(series);
+                    if($scope.n_series_ready === $scope.n_series){
+                        $scope.draw();
+                    }
                 });
             };
 
@@ -379,33 +368,39 @@ app.directive('highchart', function (){
                     $scope.highchart_options.yaxis['categories'] = categories;
                 }
             };
+
+            $scope.draw = function(){
+                var options = {
+                    title: $scope.highchart_options.title,
+                    subtitle: $scope.highchart_options.subtitle,
+                    xAxis: $scope.highchart_options.xaxis,
+                    yAxis: $scope.highchart_options.yaxis,
+                    series: $scope.highchart_options.series,
+                    legend: $scope.highchart_options.legend,
+                    scrollbar: {
+                        enabled: true
+                    },
+                    navigator: {
+                        enabled: true
+                    },
+                    credits: $scope.highchart_options.credits
+                };
+
+                if($scope.is_highstock){
+                    $scope.chart = $scope.chart_element.highcharts('StockChart', options);
+                }
+                else{
+                    $scope.chart = $scope.chart_element.highcharts(options);
+                }
+            }
         },
 
         link: function(scope, element, attrs){
-            var options = {
-                title: scope.highchart_options.title,
-                subtitle: scope.highchart_options.subtitle,
-                xAxis: scope.highchart_options.xaxis,
-                yAxis: scope.highchart_options.yaxis,
-                series: scope.highchart_options.series,
-                legend: scope.highchart_options.legend,
-                scrollbar: {
-                    enabled: true
-                },
-                navigator: {
-                    enabled: true
-                },
-                credits: scope.highchart_options.credits
-            };
-
-            if('highstock' in attrs){
-                scope.chart = element.highcharts('StockChart', options);
+            scope.chart_element = element;
+            scope.is_highstock = 'highstock' in attrs;
+            if(scope.n_series_ready == scope.n_series){
+                scope.draw();
             }
-            else{
-                scope.chart = element.highcharts(options);
-            }
-
-            scope.chart_options = options;
         }
     }
 });
@@ -450,68 +445,41 @@ app.directive('series', function(){
 });
 
 
-app.directive('xaxis', function(){
+app.directive('axis', function(){
     return {
         restrict: 'E',
         require: '^highchart',
         controller: function($scope){
-            this.setTitle = function(attrs){
-                $scope.highchart_xaxis.title = attrs;
-            }
-        },
-
-        link: function(scope, element, attrs, highchartController){
-            if('categories' in attrs){
-                highchartController.addCategories('x', attrs['categories']);
-            }
-            highchartController.setAxis('x', attrs);
-        }
-    }
-});
-
-
-app.directive('yaxis', function(){
-    return {
-        restrict: 'E',
-        require: '^highchart',
-        controller: function($scope){
-            this.setTitle = function(attrs){
-                $scope.highchart_yaxis.title = {
-                    text: attrs['text']
+            this.setAxisTitle = function(axis, attrs){
+                if(which === 'x'){
+                    $.extend($scope.highchart_options.xaxis.title, get_options(attrs, $scope.typemap.title));
+                }
+                else if(which === 'y'){
+                    $.extend($scope.highchart_options.yaxis.title, get_options(attrs, $scope.typemap.title));
                 }
             }
         },
 
         link: function(scope, element, attrs, highchartController){
             if('categories' in attrs){
-                highchartController.addCategories('y', attrs['categories']);
+                highchartController.addCategories(attrs.which, attrs['categories']);
             }
-            highchartController.setAxis('y', attrs);
+            highchartController.setAxis(attrs.which, attrs);
         }
     }
 });
 
 
-app.directive('yaxistitle', function(){
+app.directive('axistitle', function(){
     return {
         restrict: 'E',
-        require: '^yaxis',
-        link: function(scope, element, attrs, yaxisController){
-            yaxisController.setTitle(attrs);
+        require: '^axis',
+        link: function(scope, element, attrs, ctrl){
+            ctrl.setAxisTitle(attrs.which, attrs);
         }
     }
 });
 
-
-app.directive('xaxistitle', function(){
-    return {
-        restrict: 'E',
-        require: '^xaxis',
-        link: function(scope, element, attrs, xaxisController){
-            xaxisController.setTitle(attrs);
-        }
-    }
-});
 
 app.directive('legend', function(){
     return {
@@ -545,3 +513,23 @@ app.directive('plotband', function(){
     }
 });
 
+
+app.directive('tooltip', function(){
+    return {
+        restrict: 'E',
+        require: '^highchart',
+        link: function(scope, element, attrs, ctrl){
+            ctrl.setToolTip(attrs);
+        }
+    }
+});
+
+app.directive('loading', function(){
+    return {
+        restrict: 'E',
+        require: '^highchart',
+        link: function(scope, element, attrs, ctrl){
+            ctrl.setLoading(attrs);
+        }
+    }
+});

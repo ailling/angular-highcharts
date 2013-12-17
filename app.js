@@ -13,3 +13,5 @@ app.controller('AppController', function($scope){
     }
 });
 
+app.controller('AppController2', function($scope){
+});
